@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Booking request sample.
+  The guest name and the special request contain XML metacharacters on
+  purpose: they show how they must be escaped (&amp;amp; and &amp;lt;).
+-->
+<OTA_HotelResRQ>
+  <HotelReservations>
+    <HotelReservation>
+      <UniqueID Id="idem-20261101-0001" CompanyName="Agoda"/>
+      <ResGlobalInfo>
+        <ResBookingType>New</ResBookingType>
+      </ResGlobalInfo>
+      <RoomStays>
+        <RoomStay>
+          <RoomStayIndexes>
+            <RoomStayIndex>
+              <TimeSpan Start="2026-11-01" End="2026-11-03"/>
+            </RoomStayIndex>
+          </RoomStayIndexes>
+          <GuestCounts>
+            <AdultCount>2</AdultCount>
+            <ChildCount>0</ChildCount>
+          </GuestCounts>
+        </RoomStay>
+      </RoomStays>
+      <RatePlans>
+        <RatePlan>
+          <RatePlanCode>AGODA-OFFER|90001|90001-1|90001-1-RP1|2026-11-01|2026-11-03|1|2||USD</RatePlanCode>
+        </RatePlan>
+      </RatePlans>
+      <ResGuests>
+        <ResGuest>
+          <GuestProfile>
+            <PersonName>
+              <GivenName>Ann &amp; Bob</GivenName>
+              <Surname>&lt;O&apos;Brien&gt;</Surname>
+            </PersonName>
+            <Email>ann@example.com</Email>
+            <Telephone>+66 2 000 0000</Telephone>
+            <Nationality>CN</Nationality>
+          </GuestProfile>
+          <GuestCounts>
+            <AdultCount>1</AdultCount>
+          </GuestCounts>
+        </ResGuest>
+      </ResGuests>
+      <SpecialRequests>
+        <SpecialRequest>Late arrival &amp; extra pillows</SpecialRequest>
+      </SpecialRequests>
+      <AdditionalInfo>
+        <Currency>USD</Currency>
+        <Nationality>CN</Nationality>
+        <Rooms>1</Rooms>
+        <OfferId>AGODA-OFFER|90001|90001-1|90001-1-RP1|2026-11-01|2026-11-03|1|2||USD</OfferId>
+        <ContextFingerprint>3f1c0a9d2b8e4c7a</ContextFingerprint>
+        <AllowDuplication>true</AllowDuplication>
+        <IdempotencyKey>idem-20261101-0001</IdempotencyKey>
+      </AdditionalInfo>
+    </HotelReservation>
+  </HotelReservations>
+</OTA_HotelResRQ>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Cancellation response: what the supplier keeps and what it refunds. -->
+<OTA_CancelRS>
+  <HotelReservations>
+    <HotelReservation>
+      <UniqueID Id="AGBK-000001" CompanyName="Agoda"/>
+      <ResStatus>Cancelled</ResStatus>
+      <CancelInfo>
+        <RefundAmount>440.00</RefundAmount>
+        <PenaltyTotal>0.00</PenaltyTotal>
+        <Currency>USD</Currency>
+      </CancelInfo>
+    </HotelReservation>
+  </HotelReservations>
+</OTA_CancelRS>

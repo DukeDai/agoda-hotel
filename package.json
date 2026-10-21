@@ -1,0 +1,25 @@
+{
+  "name": "agoda-hotel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "C-end OTA hotel sales system, powered by Agoda Demand API",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@11.27.1",
+  "scripts": {
+    "build": "pnpm -r --filter @ota/core --filter @ota/agoda-connectivity --filter @ota/api build && pnpm -r --filter @ota/web build",
+    "dev": "pnpm -r --parallel dev",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "db:setup": "pnpm --filter @ota/api db:setup",
+    "db:reset": "pnpm --filter @ota/api db:reset",
+    "db:seed": "pnpm --filter @ota/api db:seed",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

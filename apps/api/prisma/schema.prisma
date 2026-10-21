@@ -1,0 +1,559 @@
+// ---------------------------------------------------------------------------
+// OTA Hotel Sales System — data model
+//
+// Money is stored as Int in MINOR UNITS (cents). Never Decimal, never Float.
+// Stay dates are stored as Date (date-only, UTC midnight) and are always
+// interpreted as property-local calendar dates, never as instants.
+//
+// Supplier-scoped data (hotel id, room type id, rate plan id, offer id) is
+// kept verbatim so that the Agoda mapping never has to be guessed later.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Enums -----------------------------------------------------------------
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  PAID
+  BOOKING_SUBMITTED
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  REFUND_PENDING
+  REFUNDED
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  CAPTURED
+  FAILED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  DEAD
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  DEAD
+}
+
+enum SyncJobStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum SyncJobType {
+  HOTEL_CONTENT
+  HOTEL_AVAILABILITY
+}
+
+// --- Catalog (static content) ----------------------------------------------
+
+model Hotel {
+  id              String   @id @default(cuid())
+  supplier        String   @default("agoda")
+  supplierHotelId String
+  name            String
+  slug            String   @unique
+  starRating      Int?
+  category        String?
+  description     String?
+  addressLine1    String?
+  addressLine2    String?
+  city            String
+  state           String?
+  country         String
+  countryCode     String
+  postalCode      String?
+  latitude        Float?
+  longitude       Float?
+  checkInTime     String?
+  checkOutTime    String?
+  /// IANA timezone of the property, e.g. `Asia/Bangkok`.
+  /// Cancellation deadlines are evaluated in THIS timezone, not in UTC.
+  timeZone        String?
+  policies        String[]
+  raw             Json?
+
+  images    HotelImage[]
+  amenities HotelAmenity[]
+  roomTypes RoomType[]
+  quotes    AvailabilityQuote[]
+  bookings  Booking[]
+
+  status          String    @default("active")
+  contentHash     String?
+  contentSyncedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([supplier, supplierHotelId])
+  @@index([city])
+  @@index([countryCode])
+  @@index([status])
+}
+
+model HotelImage {
+  id        String @id @default(cuid())
+  hotelId   String
+  url       String
+  caption   String?
+  position  Int    @default(0)
+  createdAt DateTime @default(now())
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId, position])
+}
+
+model HotelAmenity {
+  id        String @id @default(cuid())
+  hotelId   String
+  group     String?
+  name      String
+  createdAt DateTime @default(now())
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([hotelId, name])
+  @@index([hotelId])
+}
+
+model RoomType {
+  id               String @id @default(cuid())
+  hotelId          String
+  supplierRoomTypeId String
+  name             String
+  description      String?
+  maxOccupancy     Int    @default(2)
+  bedType          String?
+  sizeSqm          Int?
+  amenities        String[]
+  imageUrls        String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  hotel    Hotel      @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  ratePlans RatePlan[]
+  quotes   AvailabilityQuote[]
+
+  @@unique([hotelId, supplierRoomTypeId])
+  @@index([hotelId])
+}
+
+model RatePlan {
+  id                 String @id @default(cuid())
+  roomTypeId         String
+  supplierRatePlanId String
+  name               String
+  cancellationType   String
+  freeCancellationUntil DateTime?
+  penaltyAmount      Int?
+  penaltyPercent     Float?
+  noShowPenalty      Int?
+  cancellationText   String?
+  mealPlan           String  @default("NO_BREAKFAST")
+  payAtHotel         Boolean @default(false)
+  instantConfirmation Boolean @default(true)
+  inclusions         String[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  quotes   AvailabilityQuote[]
+
+  @@unique([roomTypeId, supplierRatePlanId])
+  @@index([roomTypeId])
+}
+
+/// Cached supplier availability + price snapshot for one stay.
+/// Rows are disposable: they expire and are re-fetched from the supplier.
+model AvailabilityQuote {
+  id            String   @id @default(cuid())
+  hotelId       String
+  roomTypeId    String?
+  ratePlanId    String?
+  offerId       String
+  checkIn       DateTime @db.Date
+  checkOut      DateTime @db.Date
+  nights        Int
+  rooms         Int      @default(1)
+  adults        Int      @default(2)
+  childAges     Int[]
+  currency      String
+  nightlyNet    Int
+  nightlyTax    Int
+  nightlyTotal  Int
+  netAmount     Int
+  taxAmount     Int
+  totalAmount   Int
+  /// The price the customer was last SHOWN (the baseline of the offer).
+  /// A booking may only be priced above this after the customer accepted it.
+  quotedTotalAmount Int?
+  /// Set when the supplier re-priced the offer after the customer chose it.
+  /// Non-null means: the customer must explicitly accept this amount.
+  pendingTotalAmount Int?
+  mealPlan      String   @default("NO_BREAKFAST")
+  payAtHotel    Boolean  @default(false)
+  instantConfirmation Boolean @default(true)
+  allotment     Int?
+  cancellationType String
+  freeCancellationUntil DateTime? @db.Date
+  penaltyAmount Int?
+  penaltyPercent Float?
+  cancellationText String?
+  contextFingerprint String
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  hotel    Hotel     @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomType RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  ratePlan RatePlan? @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId, checkIn, checkOut])
+  @@index([offerId])
+  @@index([expiresAt])
+}
+
+// --- Orders -----------------------------------------------------------------
+
+model Booking {
+  id                   String        @id @default(cuid())
+  orderNo              String        @unique
+  hotelId              String
+  status               BookingStatus @default(PENDING_PAYMENT)
+
+  checkIn   DateTime @db.Date
+  checkOut  DateTime @db.Date
+  nights    Int
+  rooms     Int      @default(1)
+  adults    Int      @default(1)
+  childAges Int[]    @default([])
+  currency  String
+  nationality String
+
+  /// Fingerprint of the StayContext used for Search/Precheck/Book.
+  /// Asserts no parameter drift across the supplier call chain.
+  contextFingerprint String
+
+  netAmount Int
+  taxAmount Int
+  totalAmount Int
+  /// The price the customer explicitly agreed to pay, when the supplier
+  /// re-priced the offer after the customer chose the room (SPEC §4.5).
+  /// Null means the price never moved, so no confirmation was needed.
+  acceptedTotalAmount Int?
+  paidAmount Int @default(0)
+  refundedAmount Int @default(0)
+
+  guestFirstName String
+  guestLastName  String
+  guestEmail     String
+  guestPhone     String?
+  specialRequests String[] @default([])
+
+  supplierBookingId    String?
+  confirmationNumber   String?
+  supplierStatus       String?
+  supplierErrorCode    String?
+  supplierErrorMessage String?
+  lastErrorCode        String?
+  failureReason        String?
+
+  /// How many times we tried to place the booking with the supplier.
+  /// A transient supplier failure is retried with the same idempotency key.
+  supplierAttempts       Int       @default(0)
+  lastSupplierAttemptAt  DateTime?
+  supplierIdempotencyKey String?
+  /// Guards the "sell out between quote and book" auto re-quote.
+  autoRequoteUsed        Boolean   @default(false)
+
+  /// Quote this booking was priced from.
+  quoteId          String?
+  offerId          String?
+  paymentExpiresAt DateTime?
+
+  confirmedAt  DateTime?
+  cancelledAt  DateTime?
+  checkedInAt  DateTime?
+  checkedOutAt DateTime?
+  refundedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotel  Hotel         @relation(fields: [hotelId], references: [id])
+  items  BookingItem[]
+  guest  BookingGuest[]
+  payment Payment?
+  refunds Refund[]
+  events BookingEvent[]
+
+  @@index([status])
+  @@index([hotelId, checkIn])
+  @@index([supplierBookingId])
+  @@index([createdAt])
+}
+
+model BookingItem {
+  id           String @id @default(cuid())
+  bookingId    String
+  roomTypeId   String?
+  ratePlanId   String?
+  offerId      String
+  roomTypeName String
+  ratePlanName String
+  bedType      String?
+  nights       Int
+  netAmount    Int
+  taxAmount    Int
+  totalAmount  Int
+  nightlyTotal Int
+  mealPlan     String  @default("NO_BREAKFAST")
+  payAtHotel   Boolean @default(false)
+  cancellationType String
+  freeCancellationUntil DateTime? @db.Date
+  penaltyAmount Int?
+  penaltyPercent Float?
+  cancellationText String?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model BookingGuest {
+  id         String  @id @default(cuid())
+  bookingId  String
+  firstName  String
+  lastName   String
+  email      String
+  phone      String?
+  nationality String
+  age        Int?
+  isLead     Boolean @default(false)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model BookingEvent {
+  id        String   @id @default(cuid())
+  bookingId String
+  type      String
+  fromStatus String?
+  toStatus  String?
+  data      Json?
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+}
+
+// --- Money movement ---------------------------------------------------------
+
+model Payment {
+  id               String        @id @default(cuid())
+  bookingId        String        @unique
+  provider         String
+  providerPaymentId String?
+  idempotencyKey   String        @unique
+  status           PaymentStatus @default(PENDING)
+  amount           Int
+  capturedAmount   Int           @default(0)
+  currency         String
+  method           String?
+  failureCode      String?
+  failureMessage   String?
+  paidAt           DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  booking Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  refunds Refund[]
+
+  @@index([status])
+}
+
+model Refund {
+  id               String       @id @default(cuid())
+  paymentId        String
+  bookingId        String
+  idempotencyKey   String       @unique
+  status           RefundStatus @default(PENDING)
+  amount           Int
+  currency         String
+  reason           String?
+  providerRefundId String?
+  attempts         Int          @default(0)
+  lastError        String?
+  succeededAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([status])
+}
+
+// --- Reliability ------------------------------------------------------------
+
+/// Idempotency records for mutating endpoints (create order, capture payment,
+/// refund). A replayed request returns the stored response instead of acting twice.
+model IdempotencyRecord {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  scope         String
+  requestHash   String
+  responseStatus Int?
+  responseBody  Json?
+  state         String   @default("IN_PROGRESS")
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+
+  @@index([scope])
+  @@index([expiresAt])
+}
+
+/// Transactional outbox: domain events are written in the same transaction as
+/// the state change, then delivered asynchronously. This is what makes
+/// notifications and webhooks survive a crash without losing events.
+model OutboxEvent {
+  id            String       @id @default(cuid())
+  topic         String
+  aggregateType String
+  aggregateId   String
+  payload       Json
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  availableAt   DateTime     @default(now())
+  lastError     String?
+  dedupeKey     String?      @unique
+  createdAt     DateTime     @default(now())
+  processedAt   DateTime?
+
+  deliveries NotificationDelivery[]
+  webhooks   WebhookDelivery[]
+
+  @@index([status, availableAt])
+  @@index([aggregateId])
+}
+
+/// Per-channel delivery attempt for one outbox event. Every channel is
+/// retried independently, so a broken SMS provider never blocks email.
+model NotificationDelivery {
+  id           String         @id @default(cuid())
+  outboxId     String
+  channel      String
+  destination  String
+  status       DeliveryStatus @default(PENDING)
+  attempts     Int            @default(0)
+  lastError    String?
+  escalatedAt  DateTime?
+  sentAt       DateTime?
+  nextAttemptAt DateTime      @default(now())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  outbox OutboxEvent @relation(fields: [outboxId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([outboxId])
+}
+
+/// Partner-facing webhook delivery, with its own retry budget and signing.
+model WebhookEndpoint {
+  id         String   @id @default(cuid())
+  url        String
+  secret     String
+  events     String[]
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  deliveries WebhookDelivery[]
+
+  @@index([active])
+}
+
+model WebhookDelivery {
+  id             String         @id @default(cuid())
+  endpointId     String
+  outboxId       String
+  eventId        String
+  status         DeliveryStatus @default(PENDING)
+  attempts       Int            @default(0)
+  responseStatus Int?
+  lastError      String?
+  nextAttemptAt  DateTime       @default(now())
+  sentAt         DateTime?
+  createdAt      DateTime       @default(now())
+
+  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  outbox   OutboxEvent     @relation(fields: [outboxId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([endpointId])
+}
+
+// --- Operations -------------------------------------------------------------
+
+model SyncJob {
+  id          String        @id @default(cuid())
+  type        SyncJobType
+  status      SyncJobStatus @default(RUNNING)
+  total       Int           @default(0)
+  processed   Int           @default(0)
+  failed      Int           @default(0)
+  error       String?
+  startedAt   DateTime      @default(now())
+  finishedAt  DateTime?
+
+  @@index([status])
+  @@index([type, startedAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actor      String
+  action     String
+  entityType String
+  entityId   String
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

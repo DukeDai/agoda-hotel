@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Booking rejected by the supplier.
+  Agoda reports the reason in the Error element; the business layer maps it
+  to BOOKING_REJECTED / DUPLICATE_BOOKING / ROOM_UNAVAILABLE / PRICE_CHANGED.
+-->
+<OTA_HotelResRS>
+  <HotelReservations>
+    <HotelReservation>
+      <UniqueID Id="" CompanyName="Agoda"/>
+      <ResStatus>Rejected</ResStatus>
+      <ResGlobalInfo>
+        <Error Code="DUPLICATE_BOOKING">A booking for this guest and hotel already exists for overlapping dates</Error>
+      </ResGlobalInfo>
+    </HotelReservation>
+  </HotelReservations>
+</OTA_HotelResRS>

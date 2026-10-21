@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Booking response once the supplier confirmed the reservation. -->
+<OTA_HotelResRS>
+  <HotelReservations>
+    <HotelReservation>
+      <UniqueID Id="AGBK-000001" CompanyName="Agoda"/>
+      <ResStatus>Confirmed</ResStatus>
+      <ResGlobalInfo>
+        <Processing>false</Processing>
+        <ResBookingType>New</ResBookingType>
+      </ResGlobalInfo>
+      <ResConfirmation>
+        <ConfirmationNumber>AGX7K2P441</ConfirmationNumber>
+      </ResConfirmation>
+      <Total>
+        <TotalAmount>440.00</TotalAmount>
+        <Currency>USD</Currency>
+      </Total>
+    </HotelReservation>
+  </HotelReservations>
+</OTA_HotelResRS>

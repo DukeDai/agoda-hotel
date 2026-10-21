@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Availability response (success).
+  Shape mirrors what the Agoda Demand API returns for a multi property
+  availability call: one AvailResponseSegment per hotel, one RatePlan per
+  room type x rate plan.
+-->
+<OTA_HotelAvailRS>
+  <AvailResponseSegments>
+    <AvailResponseSegment>
+      <HotelID>90001</HotelID>
+      <HotelName>Patong Bayview Resort</HotelName>
+      <StarRating>5</StarRating>
+      <Geo>
+        <Latitude>7.8924</Latitude>
+        <Longitude>98.2961</Longitude>
+      </Geo>
+      <Address>
+        <CityName>Phuket</CityName>
+        <CountryName>Thailand</CountryName>
+        <CountryCode>TH</CountryCode>
+      </Address>
+      <HotelSummary>
+        <LowestNightlyTotal>220.00</LowestNightlyTotal>
+        <LowestStayTotal>440.00</LowestStayTotal>
+        <Thumbnail>https://cdn.agoda.mock/hotels/90001/1.jpg</Thumbnail>
+      </HotelSummary>
+      <AdditionalInfo>
+        <Currency>USD</Currency>
+      </AdditionalInfo>
+      <RoomStays>
+        <RoomStay>
+          <RoomStayIndexes>
+            <RoomStayIndex>
+              <RoomStayIndex>1</RoomStayIndex>
+            </RoomStayIndex>
+          </RoomStayIndexes>
+          <Rates>
+            <RatePlan>
+              <OfferId>AGODA-OFFER|90001|90001-1|90001-1-RP1|2026-11-01|2026-11-03|1|2||USD</OfferId>
+              <RatePlanCode>90001-1-RP1</RatePlanCode>
+              <RatePlanDescription>Deluxe King Room - Flexible</RatePlanDescription>
+              <RoomTypeID>90001-1</RoomTypeID>
+              <RoomTypeName>Deluxe King Room</RoomTypeName>
+              <BedType>King bed</BedType>
+              <MaxOccupancy>2</MaxOccupancy>
+              <Nights>2</Nights>
+              <MealPlan>BREAKFAST_AVAILABLE</MealPlan>
+              <PayAtHotel>true</PayAtHotel>
+              <InstantConfirmation>true</InstantConfirmation>
+              <TaxesIncluded>false</TaxesIncluded>
+              <AvailableRooms>3</AvailableRooms>
+              <Rates>
+                <Rate>
+                  <Nightly>
+                    <Amount>220.00</Amount>
+                    <NetAmount>196.43</NetAmount>
+                    <TaxAmount>23.57</TaxAmount>
+                    <Currency>USD</Currency>
+                  </Nightly>
+                  <Stay>
+                    <Amount>440.00</Amount>
+                    <NetAmount>392.86</NetAmount>
+                    <TaxAmount>47.14</TaxAmount>
+                    <Currency>USD</Currency>
+                  </Stay>
+                </Rate>
+              </Rates>
+              <Charges>
+                <Charge>
+                  <ChargeType>Tax</ChargeType>
+                  <Amount>23.57</Amount>
+                  <Currency>USD</Currency>
+                  <Included>false</Included>
+                </Charge>
+              </Charges>
+              <CancellationPolicy>
+                <CancellationPolicyType>FULL_REFUND</CancellationPolicyType>
+                <Refundable>true</Refundable>
+                <FreeCancellationUntil>2026-10-29</FreeCancellationUntil>
+                <PenaltyAmount>0.00</PenaltyAmount>
+                <PenaltyPercent>0</PenaltyPercent>
+                <NoShowPenalty>220.00</NoShowPenalty>
+                <Description>Free cancellation until 3 days before arrival</Description>
+              </CancellationPolicy>
+            </RatePlan>
+          </Rates>
+        </RoomStay>
+      </RoomStays>
+    </AvailResponseSegment>
+    <AvailResponseSegment>
+      <HotelID>90002</HotelID>
+      <HotelName>Kata Rocks Boutique Hotel</HotelName>
+      <StarRating>4</StarRating>
+      <Address>
+        <CityName>Phuket</CityName>
+        <CountryName>Thailand</CountryName>
+        <CountryCode>TH</CountryCode>
+      </Address>
+      <HotelSummary>
+        <LowestNightlyTotal>88.00</LowestNightlyTotal>
+        <LowestStayTotal>176.00</LowestStayTotal>
+        <Thumbnail>https://cdn.agoda.mock/hotels/90002/1.jpg</Thumbnail>
+      </HotelSummary>
+      <AdditionalInfo>
+        <Currency>USD</Currency>
+      </AdditionalInfo>
+      <RoomStays>
+        <RoomStay>
+          <RoomStayIndexes>
+            <RoomStayIndex>
+              <RoomStayIndex>1</RoomStayIndex>
+            </RoomStayIndex>
+          </RoomStayIndexes>
+          <Rates>
+            <RatePlan>
+              <OfferId>AGODA-OFFER|90002|90002-1|90002-1-RP2|2026-11-01|2026-11-03|1|2||USD</OfferId>
+              <RatePlanCode>90002-1-RP2</RatePlanCode>
+              <RatePlanDescription>Superior Queen - Non Refundable</RatePlanDescription>
+              <RoomTypeID>90002-1</RoomTypeID>
+              <RoomTypeName>Superior Queen</RoomTypeName>
+              <MaxOccupancy>2</MaxOccupancy>
+              <Nights>2</Nights>
+              <MealPlan>NO_BREAKFAST</MealPlan>
+              <PayAtHotel>true</PayAtHotel>
+              <InstantConfirmation>true</InstantConfirmation>
+              <TaxesIncluded>false</TaxesIncluded>
+              <AvailableRooms>1</AvailableRooms>
+              <Rates>
+                <Rate>
+                  <Nightly>
+                    <Amount>88.00</Amount>
+                    <NetAmount>78.57</NetAmount>
+                    <TaxAmount>9.43</TaxAmount>
+                    <Currency>USD</Currency>
+                  </Nightly>
+                  <Stay>
+                    <Amount>176.00</Amount>
+                    <NetAmount>157.14</NetAmount>
+                    <TaxAmount>18.86</TaxAmount>
+                    <Currency>USD</Currency>
+                  </Stay>
+                </Rate>
+              </Rates>
+              <Charges>
+                <Charge>
+                  <ChargeType>Tax</ChargeType>
+                  <Amount>9.43</Amount>
+                  <Currency>USD</Currency>
+                  <Included>false</Included>
+                </Charge>
+              </Charges>
+              <CancellationPolicy>
+                <CancellationPolicyType>NON_REFUNDABLE</CancellationPolicyType>
+                <Refundable>false</Refundable>
+                <PenaltyAmount>176.00</PenaltyAmount>
+                <Description>Non refundable: the full stay price is retained</Description>
+              </CancellationPolicy>
+            </RatePlan>
+          </Rates>
+        </RoomStay>
+      </RoomStays>
+    </AvailResponseSegment>
+  </AvailResponseSegments>
+</OTA_HotelAvailRS>

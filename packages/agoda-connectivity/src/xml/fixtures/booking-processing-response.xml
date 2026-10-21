@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Booking response while the allotment is still being reserved.
+  `processing: true` means the booking is NOT confirmed: the business layer
+  must keep polling the booking detail endpoint.
+-->
+<OTA_HotelResRS>
+  <HotelReservations>
+    <HotelReservation>
+      <UniqueID Id="AGBK-000001" CompanyName="Agoda"/>
+      <ResStatus>Processing</ResStatus>
+      <ResGlobalInfo>
+        <Processing>true</Processing>
+        <ResBookingType>New</ResBookingType>
+      </ResGlobalInfo>
+      <Total>
+        <TotalAmount>440.00</TotalAmount>
+        <Currency>USD</Currency>
+      </Total>
+    </HotelReservation>
+  </HotelReservations>
+</OTA_HotelResRS>
